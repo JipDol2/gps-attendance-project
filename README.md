@@ -55,9 +55,23 @@
 ---
 
 ## 3) Backend 실행 (Gradle)
-... (기존 내용과 동일) ...
 
-`backend`는 Maven이 아니라 **Gradle Wrapper**를 사용합니다.
+`backend`는 Maven이 아니라 **Gradle Wrapper**를 사용합니다. 별도의 Gradle 설치 없이 프로젝트에 포함된 `gradlew` / `gradlew.bat`으로 바로 실행할 수 있습니다.
+
+### 사전 준비
+
+| 항목 | 확인 방법 |
+|---|---|
+| JDK 17 이상 | `java -version` |
+| Docker Desktop 실행 중 | Docker Desktop 트레이 아이콘 확인 |
+
+### 전체 실행 순서
+
+```
+1. Docker로 PostgreSQL·Redis 컨테이너 시작
+2. Gradle Wrapper로 Spring Boot 서버 실행
+3. http://localhost:8080 접속 확인
+```
 
 ### 3-1. 인프라(PostgreSQL, Redis) 실행
 
