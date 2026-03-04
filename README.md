@@ -1,30 +1,49 @@
-﻿# GPS Attendance
+﻿# GPS Attendance (GPS 기반 자동 출퇴근 관리 시스템)
 
-GPS 기반 출퇴근 관리 프로젝트입니다. 이 저장소는 아래 4개 앱으로 구성되어 있습니다.
+본 프로젝트는 사용자의 GPS 위치를 기반으로 **지정된 근무지 반경 진입/이탈 시 자동으로 출퇴근을 기록**하고, 팀 내에서 **위치 정보를 공유**할 수 있는 서비스입니다.
 
-- `backend`: Spring Boot API 서버 (Gradle)
-- `frontend`: Next.js 웹 앱
-- `android-app`: Kotlin + Jetpack Compose 안드로이드 앱
-- `ios-app`: Swift + SwiftUI iOS 앱 스캐폴드
+## 🚀 핵심 기능
 
-## 1) 사전 준비
+### 1. 위치 기반 자동 출퇴근 (Geofencing)
+- **자동 출근**: 사용자가 설정된 근무지 반경(예: 200m) 내로 진입하면 별도의 조작 없이 자동으로 출근 처리됩니다.
+- **자동 퇴근**: 사용자가 근무지 반경을 벗어나면 자동으로 퇴근 처리됩니다.
+- **퇴근 유예 시간 (Grace Period)**: GPS 신호 불안정으로 인해 일시적으로 반경을 벗어나는 경우를 대비하여, 설정된 시간(예: 5분) 이상 반경 밖에 머물 때만 퇴근으로 확정합니다.
 
-### 공통
-- Git
+### 2. 팀 및 조직 관리
+- **팀 계층 구조**: 회사-부서-팀으로 이어지는 계층 구조를 지원합니다.
+- **근무 정책 설정**: 팀별로 근무지 좌표, 출근 허용 반경, 퇴근 유예 시간을 다르게 설정할 수 있습니다.
 
-### Backend
-- JDK 17
-- Docker Desktop (PostgreSQL, Redis 실행용)
+### 3. 위치 정보 공유 (Social & Management)
+- **팀 리더 뷰**: 팀 리더는 관리 중인 팀원들의 실시간 위치 및 출근 여부를 지도에서 확인할 수 있습니다.
+- **친한 동료 공유**: 서로 위치 공유를 허용한 동료끼리는 실시간 위치를 공유하여 협업 및 친목 도모에 활용할 수 있습니다.
 
-### Frontend
-- Node.js 20+
+## 📚 핵심 기술 명세 요약 (Documentation Summary)
 
-### Android
-- Android Studio
-- Android SDK (minSdk 26 이상)
+이 프로젝트의 주요 설계 및 기술 전략입니다. 상세 내용은 링크된 문서를 참조하세요.
 
-### iOS
-- macOS + Xcode (Windows에서는 빌드/실행 불가)
+1. **[DB 설계 초안 (DATABASE.md)](docs/DATABASE.md)**
+   - **핵심**: 자동 퇴근 유예(`outside_since`) 및 위치 공유 권한(`permission_type`) 처리.
+   - **구조**: 사용자 최신 위치 캐싱을 통한 실시간 팀원 지도 조회 최적화.
+
+2. **[시스템 설계 리뷰 (SYSTEM_DESIGN_REVIEW.md)](docs/SYSTEM_DESIGN_REVIEW.md)**
+   - **핵심**: **'삼중 체크(Triple Check)'** 인증 (GPS + 사내 Wi-Fi + 비콘/PC).
+   - **보안**: GPS 위변조 방지 및 프라이버시 보호(업무 시간 외 추적 차단) 가이드.
+
+3. **[백그라운드 위치 전략 (BACKGROUND_LOCATION_STRATEGY.md)](docs/BACKGROUND_LOCATION_STRATEGY.md)**
+   - **핵심**: 앱 종료 상태에서도 작동하는 **지오펜싱(Geofencing)** 기술.
+   - **해결**: 배터리 소모 최소화 및 OS 레벨의 위치 권한 획득 전략.
+
+---
+
+## 🛠 기술 스택
+
+- **Backend**: Java 17, Spring Boot 3.x, Spring Data JPA, QueryDSL
+- **Frontend**: Next.js 14 (App Router), Tailwind CSS
+- **Mobile**: Android (Kotlin/Compose), iOS (Swift/SwiftUI)
+- **Database**: PostgreSQL (PostGIS 확장 고려), Redis (위치 캐싱)
+- **Infra**: Docker, Docker Compose
+
+---
 
 ## 2) 빠른 실행 순서
 
@@ -36,6 +55,7 @@ GPS 기반 출퇴근 관리 프로젝트입니다. 이 저장소는 아래 4개 
 ---
 
 ## 3) Backend 실행 (Gradle)
+... (기존 내용과 동일) ...
 
 `backend`는 Maven이 아니라 **Gradle Wrapper**를 사용합니다.
 
