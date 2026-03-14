@@ -3,6 +3,7 @@ package com.gpsattendance.mobile.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gpsattendance.mobile.data.model.WorkSessionResponse
+import com.gpsattendance.mobile.data.repository.AuthExpiredException
 import com.gpsattendance.mobile.data.repository.AttendanceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,9 +24,13 @@ class MainViewModel @Inject constructor(
         refreshVisibleSessions()
     }
 
-    fun refreshVisibleSessions() {
+    fun refreshVisibleSessions(showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            } else {
+                _uiState.value = _uiState.value.copy(error = null)
+            }
             attendanceRepository.visibleSessions()
                 .onSuccess { sessions ->
                     val members = buildVisibleMembers(sessions)
@@ -37,6 +42,14 @@ class MainViewModel @Inject constructor(
                     )
                 }
                 .onFailure {
+                    if (it is AuthExpiredException) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            authExpired = true,
+                            error = "Session expired. Please login again."
+                        )
+                        return@onFailure
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = it.message ?: "Failed to load team sessions"
@@ -48,7 +61,6 @@ class MainViewModel @Inject constructor(
     fun updateLocation(latitude: Double, longitude: Double) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
-                isLoading = true,
                 error = null,
                 myLatitude = latitude,
                 myLongitude = longitude
@@ -56,17 +68,30 @@ class MainViewModel @Inject constructor(
             attendanceRepository.updateMyLocation(latitude, longitude)
                 .onSuccess { result ->
                     _uiState.value = _uiState.value.copy(
-                        isLoading = false,
                         trackingMessage = "${result.state}: ${result.message}"
                     )
-                    refreshVisibleSessions()
+                    refreshVisibleSessions(showLoading = false)
                 }
                 .onFailure {
+                    if (it is AuthExpiredException) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            authExpired = true,
+                            error = "Session expired. Please login again."
+                        )
+                        return@onFailure
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = it.message ?: "Failed to update location"
                     )
                 }
+        }
+    }
+
+    fun consumeAuthExpired() {
+        if (_uiState.value.authExpired) {
+            _uiState.value = _uiState.value.copy(authExpired = false)
         }
     }
 
@@ -145,5 +170,6 @@ data class MainUiState(
     val myLatitude: Double? = null,
     val myLongitude: Double? = null,
     val trackingMessage: String? = null,
-    val error: String? = null
+    val error: String? = null,
+    val authExpired: Boolean = false
 )

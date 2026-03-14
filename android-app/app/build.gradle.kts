@@ -1,3 +1,6 @@
+import java.io.ByteArrayOutputStream
+import java.io.File
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -11,6 +14,10 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        val configuredBaseUrl = (project.findProperty("BASE_URL") as? String)
+            ?.takeIf { it.isNotBlank() }
+            ?: "http://10.0.2.2:8080/"
+
         applicationId = "com.gpsattendance.mobile"
         minSdk = 26
         targetSdk = 35
@@ -18,7 +25,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
+        buildConfigField("String", "BASE_URL", "\"$configuredBaseUrl\"")
         buildConfigField(
             "String",
             "KAKAO_NATIVE_APP_KEY",
@@ -100,3 +107,55 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+
+val setupAdbReverseForDebug by tasks.registering {
+    group = "android"
+    description = "Sets up adb reverse tcp:8080 for debug installs."
+
+    doLast {
+        val sdkDirPath = android.sdkDirectory?.absolutePath ?: System.getenv("ANDROID_SDK_ROOT")
+        if (sdkDirPath.isNullOrBlank()) {
+            logger.lifecycle("Skipping adb reverse: Android SDK path not found.")
+            return@doLast
+        }
+
+        val adbName = if (System.getProperty("os.name").contains("Windows", ignoreCase = true)) {
+            "adb.exe"
+        } else {
+            "adb"
+        }
+        val adbFile = File(sdkDirPath, "platform-tools/$adbName")
+        if (!adbFile.exists()) {
+            logger.lifecycle("Skipping adb reverse: adb not found at ${adbFile.absolutePath}.")
+            return@doLast
+        }
+
+        val devicesOutput = ByteArrayOutputStream()
+        exec {
+            commandLine(adbFile.absolutePath, "devices")
+            standardOutput = devicesOutput
+            isIgnoreExitValue = true
+        }
+
+        val hasDevice = devicesOutput.toString()
+            .lineSequence()
+            .drop(1)
+            .any { it.contains("\tdevice") }
+
+        if (!hasDevice) {
+            logger.lifecycle("Skipping adb reverse: no connected device.")
+            return@doLast
+        }
+
+        exec {
+            commandLine(adbFile.absolutePath, "reverse", "tcp:8080", "tcp:8080")
+            isIgnoreExitValue = true
+        }
+        logger.lifecycle("adb reverse configured: tcp:8080 -> tcp:8080")
+    }
+}
+
+tasks.matching { it.name.startsWith("install") && it.name.endsWith("Debug") }
+    .configureEach {
+        dependsOn(setupAdbReverseForDebug)
+    }

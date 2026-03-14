@@ -3,6 +3,7 @@ package com.gpsattendance.mobile.data.network
 import com.gpsattendance.mobile.data.model.LocationUpdateRequest
 import com.gpsattendance.mobile.data.model.LocationUpdateResponse
 import com.gpsattendance.mobile.data.model.LoginRequest
+import com.gpsattendance.mobile.data.model.PageResponse
 import com.gpsattendance.mobile.data.model.RegisterRequest
 import com.gpsattendance.mobile.data.model.RefreshTokenRequest
 import com.gpsattendance.mobile.data.model.TeamResponse
@@ -38,7 +39,7 @@ interface AttendanceApi {
     suspend fun mySessions(): Response<List<WorkSessionResponse>>
 
     @GET("api/v1/attendance/visible-sessions")
-    suspend fun visibleSessions(): Response<List<WorkSessionResponse>>
+    suspend fun visibleSessions(): Response<PageResponse<WorkSessionResponse>>
 }
 
 interface TeamApi {

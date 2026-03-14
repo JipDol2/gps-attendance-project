@@ -78,3 +78,8 @@ data class WorkSessionResponse(
     val lastLatitude: Double? = null,
     val lastLongitude: Double? = null
 )
+
+@Serializable
+data class PageResponse<T>(
+    val content: List<T> = emptyList()
+)

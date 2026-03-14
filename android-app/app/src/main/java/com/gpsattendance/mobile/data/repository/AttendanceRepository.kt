@@ -17,6 +17,9 @@ class AttendanceRepository @Inject constructor(
         val response = attendanceApi.updateMyLocation(request)
         if (!response.isSuccessful) {
             val body = response.errorBody()?.string().orEmpty()
+            if (response.code() == 401 || response.code() == 403) {
+                throw AuthExpiredException("Session expired (${response.code()})")
+            }
             throw IllegalStateException("?? ???? ?? (${response.code()}): $body")
         }
         response.body() ?: throw IllegalStateException("?? ???? ??? ?? ????")
@@ -26,6 +29,9 @@ class AttendanceRepository @Inject constructor(
         val response = attendanceApi.mySessions()
         if (!response.isSuccessful) {
             val body = response.errorBody()?.string().orEmpty()
+            if (response.code() == 401 || response.code() == 403) {
+                throw AuthExpiredException("Session expired (${response.code()})")
+            }
             throw IllegalStateException("?? ?? ?? (${response.code()}): $body")
         }
         response.body().orEmpty()
@@ -35,8 +41,11 @@ class AttendanceRepository @Inject constructor(
         val response = attendanceApi.visibleSessions()
         if (!response.isSuccessful) {
             val body = response.errorBody()?.string().orEmpty()
+            if (response.code() == 401 || response.code() == 403) {
+                throw AuthExpiredException("Session expired (${response.code()})")
+            }
             throw IllegalStateException("Visible sessions request failed (${response.code()}): $body")
         }
-        response.body().orEmpty()
+        response.body()?.content.orEmpty()
     }
 }

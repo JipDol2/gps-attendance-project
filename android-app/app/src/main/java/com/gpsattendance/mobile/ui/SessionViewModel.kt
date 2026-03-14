@@ -2,6 +2,7 @@ package com.gpsattendance.mobile.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gpsattendance.mobile.BuildConfig
 import com.gpsattendance.mobile.data.model.TeamResponse
 import com.gpsattendance.mobile.data.repository.AuthRepository
 import com.gpsattendance.mobile.data.repository.TeamRepository
@@ -10,6 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.net.ConnectException
+import java.net.UnknownHostException
+import javax.net.ssl.SSLException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -71,7 +75,7 @@ class SessionViewModel @Inject constructor(
                 .onFailure {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = it.message ?: "Registration failed",
+                        error = toUserMessage(it, "Registration failed"),
                         registrationCompleted = false
                     )
                 }
@@ -97,7 +101,7 @@ class SessionViewModel @Inject constructor(
                 .onFailure {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = it.message ?: "Login failed"
+                        error = toUserMessage(it, "Login failed")
                     )
                 }
         }
@@ -107,6 +111,27 @@ class SessionViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.logout()
             _uiState.value = SessionUiState(isLoading = false)
+        }
+    }
+
+    private fun toUserMessage(throwable: Throwable, fallback: String): String {
+        val chain = generateSequence(throwable) { it.cause }.toList()
+        val rawMessage = chain.joinToString(" | ") { it.message.orEmpty() }
+
+        return when {
+            chain.any { it is ConnectException } || rawMessage.contains("failed to connect", ignoreCase = true) -> {
+                "Cannot connect to server (${BuildConfig.BASE_URL}). If this is a real device, use your PC LAN IP or run adb reverse tcp:8080 tcp:8080."
+            }
+
+            chain.any { it is UnknownHostException } -> {
+                "Cannot resolve server host (${BuildConfig.BASE_URL}). Check BASE_URL host and network."
+            }
+
+            chain.any { it is SSLException } -> {
+                "SSL/TLS handshake failed. Check HTTPS certificate and server TLS config."
+            }
+
+            else -> throwable.message ?: fallback
         }
     }
 }
