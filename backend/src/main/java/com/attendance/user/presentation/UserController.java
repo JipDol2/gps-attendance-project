@@ -13,7 +13,9 @@ import com.attendance.user.presentation.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,9 +30,6 @@ public class UserController {
     private final AuthService authService;
     private final UserService userService;
 
-    /**
-     * 회원가입 요청을 처리하고 생성된 사용자 정보를 반환한다.
-     */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterUserRequest request) {
         User user = userService.register(
@@ -43,9 +42,6 @@ public class UserController {
         return ResponseEntity.ok(UserResponse.from(user));
     }
 
-    /**
-     * 로그인 아이디와 비밀번호를 검증한 뒤 액세스/리프레시 토큰을 발급한다.
-     */
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthService.AuthTokens tokens = authService.login(request.loginId(), request.password());
@@ -57,9 +53,6 @@ public class UserController {
         ));
     }
 
-    /**
-     * 유효한 리프레시 토큰으로 새로운 토큰 쌍을 재발급한다.
-     */
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         AuthService.AuthTokens tokens = authService.refresh(request.refreshToken());
@@ -76,7 +69,15 @@ public class UserController {
             @AuthenticationPrincipal UserSession userSession,
             @Valid @RequestBody UpdateUserOrganizationRequest request
     ) {
-        User user = userService.updateMyTeam(userSession.getLoginId(), request.roleLevel(), request.teamId());
+        User user = userService.updateMyTeam(resolveLoginId(userSession), request.roleLevel(), request.teamId());
         return ResponseEntity.ok(UserResponse.from(user));
+    }
+
+    private String resolveLoginId(UserSession userSession) {
+        if (userSession != null) {
+            return userSession.getLoginId();
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication == null ? null : authentication.getName();
     }
 }

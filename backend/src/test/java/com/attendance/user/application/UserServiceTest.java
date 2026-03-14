@@ -2,6 +2,7 @@ package com.attendance.user.application;
 
 import com.attendance.attendance.domain.WorkPolicy;
 import com.attendance.attendance.infrastructure.WorkPolicyRepository;
+import com.attendance.organization.domain.Branch;
 import com.attendance.organization.domain.RoleLevel;
 import com.attendance.organization.domain.Team;
 import com.attendance.organization.infrastructure.TeamRepository;
@@ -44,9 +45,10 @@ class UserServiceTest {
 
     @Test
     void registerCreatesMemberWithEncodedPasswordAndTeamPolicy() {
-        Team team = new Team("Platform", null);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        Team team = new Team("Platform", null, branch);
         ReflectionTestUtils.setField(team, "id", 10L);
-        WorkPolicy policy = new WorkPolicy("HQ", 37.5, 127.0, 200, 300, 10, team);
+        WorkPolicy policy = new WorkPolicy("HQ", 200, 300, 10, team);
 
         when(userRepository.existsByLoginId("hong123")).thenReturn(false);
         when(userRepository.existsByEmail("hong@test.com")).thenReturn(false);
@@ -69,7 +71,8 @@ class UserServiceTest {
 
     @Test
     void registerSucceedsWhenTeamPolicyMissing() {
-        Team team = new Team("Platform", null);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        Team team = new Team("Platform", null, branch);
         ReflectionTestUtils.setField(team, "id", 10L);
 
         when(userRepository.existsByLoginId("u1")).thenReturn(false);
@@ -100,9 +103,10 @@ class UserServiceTest {
 
     @Test
     void updateMyTeamUpdatesRoleAndTeam() {
-        Team root = new Team("Engineering", null);
-        Team oldTeam = new Team("Platform", root);
-        Team newTeam = new Team("App", root);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        Team root = new Team("Engineering", null, branch);
+        Team oldTeam = new Team("Platform", root, branch);
+        Team newTeam = new Team("App", root, branch);
         User user = new User("u1", passwordEncoder.encode("password123!"), "u1@test.com", "U1", RoleLevel.TEAM_MEMBER, oldTeam, null);
         ReflectionTestUtils.setField(user, "id", 1L);
         ReflectionTestUtils.setField(newTeam, "id", 200L);
@@ -119,8 +123,9 @@ class UserServiceTest {
 
     @Test
     void updateMyTeamFailsWhenTeamNotFound() {
-        Team root = new Team("Engineering", null);
-        Team oldTeam = new Team("Platform", root);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        Team root = new Team("Engineering", null, branch);
+        Team oldTeam = new Team("Platform", root, branch);
         User user = new User("u1", passwordEncoder.encode("password123!"), "u1@test.com", "U1", RoleLevel.TEAM_MEMBER, oldTeam, null);
         ReflectionTestUtils.setField(user, "id", 1L);
 
@@ -134,8 +139,9 @@ class UserServiceTest {
 
     @Test
     void updateMyTeamRejectsRoleElevationWithoutHrAuthority() {
-        Team root = new Team("Engineering", null);
-        Team team = new Team("Platform", root);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        Team root = new Team("Engineering", null, branch);
+        Team team = new Team("Platform", root, branch);
         User user = new User("u1", passwordEncoder.encode("password123!"), "u1@test.com", "U1", RoleLevel.TEAM_MEMBER, team, null);
         ReflectionTestUtils.setField(user, "id", 1L);
         ReflectionTestUtils.setField(team, "id", 10L);
@@ -149,8 +155,9 @@ class UserServiceTest {
 
     @Test
     void updateMyTeamAllowsRoleElevationWithHrAuthority() {
-        Team root = new Team("Engineering", null);
-        Team team = new Team("Platform", root);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        Team root = new Team("Engineering", null, branch);
+        Team team = new Team("Platform", root, branch);
         User user = new User("u1", passwordEncoder.encode("password123!"), "u1@test.com", "U1", RoleLevel.TEAM_MEMBER, team, null);
         user.grantHrAuthority();
         ReflectionTestUtils.setField(user, "id", 1L);

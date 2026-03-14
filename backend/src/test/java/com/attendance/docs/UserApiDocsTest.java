@@ -1,6 +1,7 @@
 package com.attendance.docs;
 
 import com.attendance.attendance.domain.WorkPolicy;
+import com.attendance.organization.domain.Branch;
 import com.attendance.organization.domain.RoleLevel;
 import com.attendance.organization.domain.Team;
 import com.attendance.shared.security.CustomUserDetailsService;
@@ -139,9 +140,11 @@ class UserApiDocsTest {
     }
 
     private User sampleUser(String loginId, RoleLevel roleLevel) {
-        Team team = new Team("Platform", null);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        ReflectionTestUtils.setField(branch, "id", 1L);
+        Team team = new Team("Platform", null, branch);
         ReflectionTestUtils.setField(team, "id", 10L);
-        WorkPolicy policy = new WorkPolicy("HQ", 37.5, 127.0, 200, 300, 10, team);
+        WorkPolicy policy = new WorkPolicy("HQ", 200, 300, 10, team);
         ReflectionTestUtils.setField(policy, "id", 20L);
 
         User user = new User(loginId, "encoded-password", loginId + "@test.com", "Hong", roleLevel, team, policy);

@@ -5,6 +5,7 @@ import com.attendance.attendance.domain.WorkSession;
 import com.attendance.attendance.domain.WorkSessionStatus;
 import com.attendance.attendance.infrastructure.WorkPolicyRepository;
 import com.attendance.attendance.infrastructure.WorkSessionRepository;
+import com.attendance.organization.domain.Branch;
 import com.attendance.shared.exception.BusinessException;
 import com.attendance.shared.geo.GeoDistanceCalculator;
 import com.attendance.user.domain.User;
@@ -40,10 +41,11 @@ public class AttendanceTrackingService {
 
     private TrackingResult processLocationForUser(User user, double latitude, double longitude, LocalDateTime observedAt) {
         WorkPolicy policy = resolveUserPolicy(user);
+        Branch branch = resolveBranch(user);
 
         double distance = geoDistanceCalculator.meters(
-                policy.getLatitude(),
-                policy.getLongitude(),
+                branch.getLatitude(),
+                branch.getLongitude(),
                 latitude,
                 longitude
         );
@@ -108,6 +110,16 @@ public class AttendanceTrackingService {
         user.assignWorkPolicy(policy);
         userRepository.save(user);
         return policy;
+    }
+
+    private Branch resolveBranch(User user) {
+        if (user.getTeam() == null) {
+            throw new BusinessException("team is not assigned");
+        }
+        if (user.getTeam().getBranch() == null) {
+            throw new BusinessException("branch is not assigned for your team");
+        }
+        return user.getTeam().getBranch();
     }
 
     public record TrackingResult(

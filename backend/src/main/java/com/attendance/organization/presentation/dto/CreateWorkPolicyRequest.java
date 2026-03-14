@@ -8,8 +8,6 @@ import jakarta.validation.constraints.NotNull;
 public record CreateWorkPolicyRequest(
         @NotNull Long teamId,
         @NotBlank String name,
-        @NotNull Double latitude,
-        @NotNull Double longitude,
         @Min(1) @Max(10000) Integer checkinRadiusM,
         @Min(1) @Max(10000) Integer checkoutRadiusM,
         @Min(1) @Max(1440) Integer checkoutGraceMinutes

@@ -77,9 +77,14 @@ cd backend
 - `POST /api/v1/attendance/me/location`
 - `GET /api/v1/attendance/me/sessions`
 - `GET /api/v1/attendance/visible-sessions`
+- `GET /api/v1/branches`
+- `POST /api/v1/branches`
+- `PATCH /api/v1/branches/{branchId}`
+- `DELETE /api/v1/branches/{branchId}`
 - `GET /api/v1/teams`
 - `POST /api/v1/teams`
 - `POST /api/v1/teams/work-policies`
+- `PATCH /api/v1/teams/work-policies/{policyId}`
 
 ## 종료
 ```bash

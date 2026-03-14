@@ -5,6 +5,7 @@ import com.attendance.attendance.domain.WorkSession;
 import com.attendance.attendance.domain.WorkSessionStatus;
 import com.attendance.attendance.infrastructure.WorkPolicyRepository;
 import com.attendance.attendance.infrastructure.WorkSessionRepository;
+import com.attendance.organization.domain.Branch;
 import com.attendance.organization.domain.RoleLevel;
 import com.attendance.organization.domain.Team;
 import com.attendance.shared.geo.GeoDistanceCalculator;
@@ -39,7 +40,6 @@ class AttendanceTrackingServiceTest {
     private AttendanceTrackingService attendanceTrackingService;
 
     @BeforeEach
-    // 테스트마다 AttendanceTrackingService와 Mock 의존성을 초기화한다.
     void setUp() {
         attendanceTrackingService = new AttendanceTrackingService(
                 userRepository,
@@ -50,7 +50,6 @@ class AttendanceTrackingServiceTest {
     }
 
     @Test
-    // 출근 반경 내 위치 보고 시 자동 출근 세션이 시작되는지 검증한다.
     void startsCheckInWhenInsideCheckinRadius() {
         User user = createUserWithPolicy();
         LocalDateTime now = LocalDateTime.of(2026, 2, 13, 9, 0);
@@ -72,7 +71,6 @@ class AttendanceTrackingServiceTest {
     }
 
     @Test
-    // 유예 시간 이상 반경 이탈 시 자동 퇴근 처리되는지 검증한다.
     void checksOutAutomaticallyWhenOutsideLongerThanGraceMinutes() {
         User user = createUserWithPolicy();
         LocalDateTime firstOutside = LocalDateTime.of(2026, 2, 13, 18, 0);
@@ -96,13 +94,14 @@ class AttendanceTrackingServiceTest {
         assertThat(captor.getValue().getCheckOutAt()).isEqualTo(firstOutside.plusMinutes(11));
     }
 
-    // 위치 추적 테스트에 사용할 팀/정책/사용자 기본 객체를 생성한다.
     private User createUserWithPolicy() {
-        Team root = new Team("Engineering", null);
-        Team team = new Team("Platform", root);
-        WorkPolicy policy = new WorkPolicy("HQ", 37.5, 127.0, 200, 300, 10, team);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        Team root = new Team("Engineering", null, branch);
+        Team team = new Team("Platform", root, branch);
+        WorkPolicy policy = new WorkPolicy("HQ", 200, 300, 10, team);
         User user = new User("tester1", "pw", "tester@test.com", "Tester", RoleLevel.TEAM_MEMBER, team, policy);
 
+        ReflectionTestUtils.setField(branch, "id", 10L);
         ReflectionTestUtils.setField(root, "id", 1L);
         ReflectionTestUtils.setField(team, "id", 2L);
         ReflectionTestUtils.setField(policy, "id", 1L);

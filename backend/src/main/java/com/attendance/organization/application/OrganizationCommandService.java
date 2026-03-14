@@ -2,7 +2,9 @@ package com.attendance.organization.application;
 
 import com.attendance.attendance.domain.WorkPolicy;
 import com.attendance.attendance.infrastructure.WorkPolicyRepository;
+import com.attendance.organization.domain.Branch;
 import com.attendance.organization.domain.Team;
+import com.attendance.organization.infrastructure.BranchRepository;
 import com.attendance.organization.infrastructure.TeamRepository;
 import com.attendance.shared.exception.BusinessException;
 import com.attendance.user.domain.User;
@@ -19,6 +21,7 @@ import java.util.List;
 public class OrganizationCommandService {
 
     private final TeamRepository teamRepository;
+    private final BranchRepository branchRepository;
     private final WorkPolicyRepository workPolicyRepository;
     private final UserRepository userRepository;
 
@@ -27,13 +30,49 @@ public class OrganizationCommandService {
         return teamRepository.findAllByOrderByNameAsc();
     }
 
-    public Team createTeam(String actorLoginId, Long parentTeamId, String name) {
+    @Transactional(readOnly = true)
+    public List<Branch> listBranches() {
+        return branchRepository.findAllByOrderByNameAsc();
+    }
+
+    public Branch createBranch(String actorLoginId, String name, double latitude, double longitude) {
+        requireHrActor(actorLoginId);
+        if (branchRepository.existsByName(name)) {
+            throw new BusinessException("branch already exists");
+        }
+        return branchRepository.save(new Branch(name, latitude, longitude));
+    }
+
+    public Branch updateBranch(String actorLoginId, Long branchId, String name, double latitude, double longitude) {
+        requireHrActor(actorLoginId);
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new BusinessException("branch not found"));
+        if (branchRepository.existsByNameAndIdNot(name, branchId)) {
+            throw new BusinessException("branch already exists");
+        }
+        branch.update(name, latitude, longitude);
+        return branchRepository.save(branch);
+    }
+
+    public void deleteBranch(String actorLoginId, Long branchId) {
+        requireHrActor(actorLoginId);
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new BusinessException("branch not found"));
+        if (teamRepository.existsByBranchId(branchId)) {
+            throw new BusinessException("cannot delete branch with assigned teams");
+        }
+        branchRepository.delete(branch);
+    }
+
+    public Team createTeam(String actorLoginId, Long parentTeamId, String name, Long branchId) {
         requireHrActor(actorLoginId);
         Team parentTeam = null;
         if (parentTeamId != null) {
             parentTeam = teamRepository.findById(parentTeamId)
                     .orElseThrow(() -> new BusinessException("parent team not found"));
         }
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new BusinessException("branch not found"));
 
         boolean exists = parentTeam == null
                 ? teamRepository.existsByParentTeamIsNullAndName(name)
@@ -43,10 +82,10 @@ public class OrganizationCommandService {
             throw new BusinessException("team already exists in the same level");
         }
 
-        return teamRepository.save(new Team(name, parentTeam));
+        return teamRepository.save(new Team(name, parentTeam, branch));
     }
 
-    public Team updateTeam(String actorLoginId, Long teamId, String name, Long parentTeamId) {
+    public Team updateTeam(String actorLoginId, Long teamId, String name, Long parentTeamId, Long branchId) {
         requireHrActor(actorLoginId);
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException("team not found"));
@@ -63,6 +102,9 @@ public class OrganizationCommandService {
             }
         }
 
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new BusinessException("branch not found"));
+
         boolean exists = parentTeam == null
                 ? teamRepository.existsByParentTeamIsNullAndNameAndIdNot(name, teamId)
                 : teamRepository.existsByParentTeamAndNameAndIdNot(parentTeam, name, teamId);
@@ -72,6 +114,7 @@ public class OrganizationCommandService {
 
         team.changeName(name);
         team.changeParentTeam(parentTeam);
+        team.changeBranch(branch);
         return teamRepository.save(team);
     }
 
@@ -79,8 +122,6 @@ public class OrganizationCommandService {
             String actorLoginId,
             Long teamId,
             String name,
-            double latitude,
-            double longitude,
             int checkinRadiusM,
             int checkoutRadiusM,
             int checkoutGraceMinutes
@@ -93,8 +134,6 @@ public class OrganizationCommandService {
 
         WorkPolicy policy = new WorkPolicy(
                 name,
-                latitude,
-                longitude,
                 checkinRadiusM,
                 checkoutRadiusM,
                 checkoutGraceMinutes,
@@ -108,8 +147,6 @@ public class OrganizationCommandService {
             Long policyId,
             Long teamId,
             String name,
-            double latitude,
-            double longitude,
             int checkinRadiusM,
             int checkoutRadiusM,
             int checkoutGraceMinutes
@@ -123,7 +160,7 @@ public class OrganizationCommandService {
 
         validatePolicyValues(checkinRadiusM, checkoutRadiusM, checkoutGraceMinutes);
 
-        policy.update(team, name, latitude, longitude, checkinRadiusM, checkoutRadiusM, checkoutGraceMinutes);
+        policy.update(team, name, checkinRadiusM, checkoutRadiusM, checkoutGraceMinutes);
         return workPolicyRepository.save(policy);
     }
 

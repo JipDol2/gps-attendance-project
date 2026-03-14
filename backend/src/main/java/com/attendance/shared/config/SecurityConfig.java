@@ -25,7 +25,6 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
-    // Configure API security rules and register authentication/logging filters.
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
@@ -38,6 +37,7 @@ public class SecurityConfig {
                                 "/docs/*"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/teams").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/branches").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -47,13 +47,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    // Use BCrypt for password hashing and verification.
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    // Wire user details service + password encoder into auth provider.
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(customUserDetailsService);

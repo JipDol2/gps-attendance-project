@@ -13,7 +13,9 @@ import com.attendance.shared.security.UserSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,7 +48,12 @@ public class TeamController {
             @AuthenticationPrincipal UserSession userSession,
             @Valid @RequestBody CreateTeamRequest request
     ) {
-        Team team = organizationCommandService.createTeam(userSession.getLoginId(), request.parentTeamId(), request.name());
+        Team team = organizationCommandService.createTeam(
+                resolveLoginId(userSession),
+                request.parentTeamId(),
+                request.name(),
+                request.branchId()
+        );
         return ResponseEntity.ok(TeamResponse.from(team));
     }
 
@@ -56,7 +63,13 @@ public class TeamController {
             @PathVariable Long teamId,
             @Valid @RequestBody UpdateTeamRequest request
     ) {
-        Team team = organizationCommandService.updateTeam(userSession.getLoginId(), teamId, request.name(), request.parentTeamId());
+        Team team = organizationCommandService.updateTeam(
+                resolveLoginId(userSession),
+                teamId,
+                request.name(),
+                request.parentTeamId(),
+                request.branchId()
+        );
         return ResponseEntity.ok(TeamResponse.from(team));
     }
 
@@ -66,11 +79,9 @@ public class TeamController {
             @Valid @RequestBody CreateWorkPolicyRequest request
     ) {
         WorkPolicy policy = organizationCommandService.createWorkPolicy(
-                userSession.getLoginId(),
+                resolveLoginId(userSession),
                 request.teamId(),
                 request.name(),
-                request.latitude(),
-                request.longitude(),
                 request.checkinRadiusM(),
                 request.checkoutRadiusM(),
                 request.checkoutGraceMinutes()
@@ -89,12 +100,10 @@ public class TeamController {
             @Valid @RequestBody UpdateWorkPolicyRequest request
     ) {
         WorkPolicy policy = organizationCommandService.updateWorkPolicy(
-                userSession.getLoginId(),
+                resolveLoginId(userSession),
                 policyId,
                 request.teamId(),
                 request.name(),
-                request.latitude(),
-                request.longitude(),
                 request.checkinRadiusM(),
                 request.checkoutRadiusM(),
                 request.checkoutGraceMinutes()
@@ -104,5 +113,13 @@ public class TeamController {
                 "name", policy.getName(),
                 "teamId", policy.getTeam().getId()
         ));
+    }
+
+    private String resolveLoginId(UserSession userSession) {
+        if (userSession != null) {
+            return userSession.getLoginId();
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication == null ? null : authentication.getName();
     }
 }

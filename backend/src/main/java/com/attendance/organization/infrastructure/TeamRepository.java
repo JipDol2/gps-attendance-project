@@ -15,4 +15,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     boolean existsByParentTeamAndNameAndIdNot(Team parentTeam, String name, Long id);
 
     boolean existsByParentTeamIsNullAndNameAndIdNot(String name, Long id);
+
+    boolean existsByBranchId(Long branchId);
 }

@@ -2,6 +2,7 @@ package com.attendance.docs;
 
 import com.attendance.attendance.domain.WorkPolicy;
 import com.attendance.organization.application.OrganizationCommandService;
+import com.attendance.organization.domain.Branch;
 import com.attendance.organization.domain.Team;
 import com.attendance.shared.security.CustomUserDetailsService;
 import com.attendance.shared.security.JwtAuthenticationFilter;
@@ -20,7 +21,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -56,12 +56,15 @@ class OrganizationApiDocsTest {
     @Test
     @WithMockUser(username = "hr1")
     void createTeam() throws Exception {
-        Team team = new Team("Engineering", null);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        ReflectionTestUtils.setField(branch, "id", 3L);
+        Team team = new Team("Engineering", null, branch);
         ReflectionTestUtils.setField(team, "id", 1L);
-        given(organizationCommandService.createTeam("hr1", null, "Engineering")).willReturn(team);
+        given(organizationCommandService.createTeam("hr1", null, "Engineering", 3L)).willReturn(team);
 
         Map<String, Object> request = Map.of(
-                "name", "Engineering"
+                "name", "Engineering",
+                "branchId", 3
         );
 
         mockMvc.perform(post("/api/v1/teams")
@@ -76,16 +79,19 @@ class OrganizationApiDocsTest {
     @Test
     @WithMockUser(username = "hr1")
     void updateTeam() throws Exception {
-        Team parentTeam = new Team("Engineering", null);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        ReflectionTestUtils.setField(branch, "id", 3L);
+        Team parentTeam = new Team("Engineering", null, branch);
         ReflectionTestUtils.setField(parentTeam, "id", 1L);
-        Team team = new Team("Platform", parentTeam);
+        Team team = new Team("Platform", parentTeam, branch);
         ReflectionTestUtils.setField(team, "id", 10L);
 
-        given(organizationCommandService.updateTeam("hr1", 10L, "Platform", 1L)).willReturn(team);
+        given(organizationCommandService.updateTeam("hr1", 10L, "Platform", 1L, 3L)).willReturn(team);
 
         Map<String, Object> request = Map.of(
                 "name", "Platform",
-                "parentTeamId", 1
+                "parentTeamId", 1,
+                "branchId", 3
         );
 
         mockMvc.perform(patch("/api/v1/teams/{teamId}", 10)
@@ -100,19 +106,18 @@ class OrganizationApiDocsTest {
     @Test
     @WithMockUser(username = "hr1")
     void createWorkPolicy() throws Exception {
-        Team team = new Team("Platform", null);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        Team team = new Team("Platform", null, branch);
         ReflectionTestUtils.setField(team, "id", 10L);
-        WorkPolicy policy = new WorkPolicy("HQ Policy", 37.5, 127.0, 200, 300, 10, team);
+        WorkPolicy policy = new WorkPolicy("HQ Policy", 200, 300, 10, team);
         ReflectionTestUtils.setField(policy, "id", 1L);
 
-        given(organizationCommandService.createWorkPolicy(eq("hr1"), anyLong(), anyString(), anyDouble(), anyDouble(), anyInt(), anyInt(), anyInt()))
+        given(organizationCommandService.createWorkPolicy(eq("hr1"), anyLong(), anyString(), anyInt(), anyInt(), anyInt()))
                 .willReturn(policy);
 
         Map<String, Object> request = Map.of(
                 "teamId", 10,
                 "name", "HQ Policy",
-                "latitude", 37.5,
-                "longitude", 127.0,
                 "checkinRadiusM", 200,
                 "checkoutRadiusM", 300,
                 "checkoutGraceMinutes", 10
@@ -130,20 +135,19 @@ class OrganizationApiDocsTest {
     @Test
     @WithMockUser(username = "lead1")
     void updateWorkPolicy() throws Exception {
-        Team team = new Team("Platform", null);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        Team team = new Team("Platform", null, branch);
         ReflectionTestUtils.setField(team, "id", 10L);
-        WorkPolicy policy = new WorkPolicy("Updated HQ Policy", 37.55, 127.05, 250, 350, 15, team);
+        WorkPolicy policy = new WorkPolicy("Updated HQ Policy", 250, 350, 15, team);
         ReflectionTestUtils.setField(policy, "id", 1L);
 
         given(organizationCommandService.updateWorkPolicy(
-                eq("lead1"), eq(1L), anyLong(), anyString(), anyDouble(), anyDouble(), anyInt(), anyInt(), anyInt()
+                eq("lead1"), eq(1L), anyLong(), anyString(), anyInt(), anyInt(), anyInt()
         )).willReturn(policy);
 
         Map<String, Object> request = Map.of(
                 "teamId", 10,
                 "name", "Updated HQ Policy",
-                "latitude", 37.55,
-                "longitude", 127.05,
                 "checkinRadiusM", 250,
                 "checkoutRadiusM", 350,
                 "checkoutGraceMinutes", 15

@@ -25,22 +25,27 @@ public class Team {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // 팀 식별자(PK)
     private Long id;
 
     @Column(nullable = false)
-    // 팀 이름
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_team_id")
-    // 상위 팀(FK), 루트 팀이면 null
     private Team parentTeam;
 
-    // 팀 이름과 상위 팀 정보를 받아 팀 엔티티를 생성한다.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id", nullable = false)
+    private Branch branch;
+
     public Team(String name, Team parentTeam) {
+        this(name, parentTeam, null);
+    }
+
+    public Team(String name, Team parentTeam, Branch branch) {
         this.name = name;
         this.parentTeam = parentTeam;
+        this.branch = branch;
     }
 
     public void changeName(String name) {
@@ -51,9 +56,12 @@ public class Team {
         this.parentTeam = parentTeam;
     }
 
+    public void changeBranch(Branch branch) {
+        this.branch = branch;
+    }
+
     private static final int MAX_HIERARCHY_DEPTH = 50;
 
-    // 현재 팀에서 부모 체인을 따라가 최상위 루트 팀 ID를 반환한다.
     public Long rootTeamId() {
         Team current = this;
         int depth = 0;

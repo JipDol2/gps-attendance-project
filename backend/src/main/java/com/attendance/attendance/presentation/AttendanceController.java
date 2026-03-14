@@ -9,11 +9,14 @@ import com.attendance.shared.security.UserSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,7 +41,7 @@ public class AttendanceController {
     ) {
         LocalDateTime observedAt = request.observedAt() == null ? LocalDateTime.now() : request.observedAt();
         AttendanceTrackingService.TrackingResult result = attendanceTrackingService.processMyLocation(
-                userSession.getLoginId(),
+                resolveLoginId(userSession),
                 request.latitude(),
                 request.longitude(),
                 observedAt
@@ -51,9 +54,9 @@ public class AttendanceController {
             @AuthenticationPrincipal UserSession userSession,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        Page<WorkSessionResponse> responses = attendanceQueryService.mySessions(userSession.getId(), pageable)
+        Page<WorkSessionResponse> mapped = attendanceQueryService.mySessions(resolveUserId(userSession), pageable)
                 .map(WorkSessionResponse::from);
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(new PageImpl<>(mapped.getContent(), pageable, mapped.getTotalElements()));
     }
 
     @GetMapping("/visible-sessions")
@@ -63,9 +66,24 @@ public class AttendanceController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        Page<WorkSessionResponse> responses = attendanceQueryService
-                .visibleSessionsByLoginId(userSession.getLoginId(), from, to, pageable)
+        Page<WorkSessionResponse> mapped = attendanceQueryService
+                .visibleSessionsByLoginId(resolveLoginId(userSession), from, to, pageable)
                 .map(WorkSessionResponse::from);
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(new PageImpl<>(mapped.getContent(), pageable, mapped.getTotalElements()));
+    }
+
+    private String resolveLoginId(UserSession userSession) {
+        if (userSession != null) {
+            return userSession.getLoginId();
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication == null ? null : authentication.getName();
+    }
+
+    private Long resolveUserId(UserSession userSession) {
+        if (userSession != null) {
+            return userSession.getId();
+        }
+        return 0L;
     }
 }

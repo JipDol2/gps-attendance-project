@@ -5,6 +5,7 @@ import com.attendance.attendance.application.AttendanceTrackingService;
 import com.attendance.attendance.application.TrackingState;
 import com.attendance.attendance.domain.WorkPolicy;
 import com.attendance.attendance.domain.WorkSession;
+import com.attendance.organization.domain.Branch;
 import com.attendance.organization.domain.RoleLevel;
 import com.attendance.organization.domain.Team;
 import com.attendance.shared.security.CustomUserDetailsService;
@@ -123,10 +124,12 @@ class AttendanceApiDocsTest {
     }
 
     private WorkSession sampleSession(Long userId, String userName, LocalDateTime checkInAt) {
-        Team team = new Team("Platform", null);
+        Branch branch = new Branch("Euljiro", 37.5, 127.0);
+        ReflectionTestUtils.setField(branch, "id", 1L);
+        Team team = new Team("Platform", null, branch);
         ReflectionTestUtils.setField(team, "id", 10L);
 
-        WorkPolicy policy = new WorkPolicy("HQ", 37.5, 127.0, 200, 300, 10, team);
+        WorkPolicy policy = new WorkPolicy("HQ", 200, 300, 10, team);
         ReflectionTestUtils.setField(policy, "id", 20L);
 
         User user = new User("login-" + userId, "encoded", userId + "@test.com", userName, RoleLevel.TEAM_MEMBER, team, policy);

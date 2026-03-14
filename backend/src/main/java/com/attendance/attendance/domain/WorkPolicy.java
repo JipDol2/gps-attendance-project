@@ -27,12 +27,6 @@ public class WorkPolicy {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "latitude", nullable = false)
-    private double latitude;
-
-    @Column(name = "longitude", nullable = false)
-    private double longitude;
-
     @Column(name = "checkin_radius_m", nullable = false)
     private int checkinRadiusM;
 
@@ -48,16 +42,12 @@ public class WorkPolicy {
 
     public WorkPolicy(
             String name,
-            double latitude,
-            double longitude,
             int checkinRadiusM,
             int checkoutRadiusM,
             int checkoutGraceMinutes,
             Team team
     ) {
         this.name = name;
-        this.latitude = latitude;
-        this.longitude = longitude;
         this.checkinRadiusM = checkinRadiusM;
         this.checkoutRadiusM = checkoutRadiusM;
         this.checkoutGraceMinutes = checkoutGraceMinutes;
@@ -67,16 +57,12 @@ public class WorkPolicy {
     public void update(
             Team team,
             String name,
-            double latitude,
-            double longitude,
             int checkinRadiusM,
             int checkoutRadiusM,
             int checkoutGraceMinutes
     ) {
         this.team = team;
         this.name = name;
-        this.latitude = latitude;
-        this.longitude = longitude;
         this.checkinRadiusM = checkinRadiusM;
         this.checkoutRadiusM = checkoutRadiusM;
         this.checkoutGraceMinutes = checkoutGraceMinutes;

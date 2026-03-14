@@ -1,72 +1,61 @@
-INSERT INTO teams (name, parent_team_id)
-SELECT 'ë¡œë°ì´ë…¸ë² ì´ì…˜', NULL
+INSERT INTO branches (name, latitude, longitude)
+SELECT 'À»Áö·Î °æ±âºôµù', 37.5661, 126.9920
 WHERE NOT EXISTS (
-    SELECT 1
-    FROM teams
-    WHERE name = 'ë¡œë°ì´ë…¸ë² ì´ì…˜'
-      AND parent_team_id IS NULL
+    SELECT 1 FROM branches WHERE name = 'À»Áö·Î °æ±âºôµù'
 );
 
-INSERT INTO teams (name, parent_team_id)
-SELECT 'ê²½ì˜ì „ëµë³¸ë¶€', parent.id
+INSERT INTO branches (name, latitude, longitude)
+SELECT '°­³² Å×Çì¶õ¼¾ÅÍ', 37.4981, 127.0276
+WHERE NOT EXISTS (
+    SELECT 1 FROM branches WHERE name = '°­³² Å×Çì¶õ¼¾ÅÍ'
+);
+
+INSERT INTO teams (name, parent_team_id, branch_id)
+SELECT 'RodeInnovation', NULL, b.id
+FROM branches b
+WHERE b.name = 'À»Áö·Î °æ±âºôµù'
+  AND NOT EXISTS (
+      SELECT 1 FROM teams t WHERE t.name = 'RodeInnovation' AND t.parent_team_id IS NULL
+  );
+
+INSERT INTO teams (name, parent_team_id, branch_id)
+SELECT 'BusinessDivision', parent.id, b.id
 FROM teams parent
-WHERE parent.name = 'ë¡œë°ì´ë…¸ë² ì´ì…˜'
+JOIN branches b ON b.name = 'À»Áö·Î °æ±âºôµù'
+WHERE parent.name = 'RodeInnovation'
   AND parent.parent_team_id IS NULL
   AND NOT EXISTS (
-      SELECT 1
-      FROM teams child
-      WHERE child.name = 'ê²½ì˜ì „ëµë³¸ë¶€'
-        AND child.parent_team_id = parent.id
+      SELECT 1 FROM teams t WHERE t.name = 'BusinessDivision' AND t.parent_team_id = parent.id
   );
 
-INSERT INTO teams (name, parent_team_id)
-SELECT 'ê²½ì˜ì§€ì›ë¶€ë¬¸', parent.id
+INSERT INTO teams (name, parent_team_id, branch_id)
+SELECT child_name, parent.id, b.id
 FROM teams parent
-WHERE parent.name = 'ê²½ì˜ì „ëµë³¸ë¶€'
+CROSS JOIN (VALUES ('HR'), ('Sales'), ('FieldOps')) AS children(child_name)
+JOIN branches b ON b.name = CASE WHEN children.child_name = 'FieldOps' THEN '°­³² Å×Çì¶õ¼¾ÅÍ' ELSE 'À»Áö·Î °æ±âºôµù' END
+WHERE parent.name = 'BusinessDivision'
   AND NOT EXISTS (
-      SELECT 1
-      FROM teams child
-      WHERE child.name = 'ê²½ì˜ì§€ì›ë¶€ë¬¸'
-        AND child.parent_team_id = parent.id
+      SELECT 1 FROM teams t WHERE t.name = children.child_name AND t.parent_team_id = parent.id
   );
 
-INSERT INTO teams (name, parent_team_id)
-SELECT child_name, parent.id
-FROM teams parent
-CROSS JOIN (
-    VALUES ('ì¸ì‚¬êµìœ¡íŒ€'), ('êµ¬ë§¤íŒ€'), ('ì¬ë¬´ì§€ì›íŒ€')
-) AS children(child_name)
-WHERE parent.name = 'ê²½ì˜ì§€ì›ë¶€ë¬¸'
-  AND NOT EXISTS (
-      SELECT 1
-      FROM teams child
-      WHERE child.name = children.child_name
-        AND child.parent_team_id = parent.id
-  );
-
-INSERT INTO work_policies (name, latitude, longitude, checkin_radius_m, checkout_radius_m, checkout_grace_minutes, team_id)
+INSERT INTO work_policies (name, checkin_radius_m, checkout_radius_m, checkout_grace_minutes, team_id)
 SELECT
-    'ê¸°ë³¸ ì •ì±… ' || t.id,
-    ROUND((37.300000 + random() * 0.500000)::numeric, 6)::double precision,
-    ROUND((126.700000 + random() * 0.700000)::numeric, 6)::double precision,
-    (100 + FLOOR(random() * 151))::int,
-    (200 + FLOOR(random() * 201))::int,
-    (5 + FLOOR(random() * 16))::int,
+    'Default Policy ' || t.id,
+    500,
+    700,
+    10,
     t.id
 FROM teams t
 WHERE NOT EXISTS (
-    SELECT 1
-    FROM work_policies wp
-    WHERE wp.team_id = t.id
+    SELECT 1 FROM work_policies wp WHERE wp.team_id = t.id
 );
 
--- ê´€ë¦¬ì ìœ ì € (ë¹„ë°€ë²ˆí˜¸: Test1234!)
 INSERT INTO users (login_id, password_hash, email, name, role_level, team_id, policy_id, active, hr_authority, created_at, updated_at)
 SELECT
     'admin',
     '$2a$10$AxTw/7.TZ1oWYOReGjx6qONpqeCKqj7xVc4b1EhtBv3znaiyAtmF2',
     'admin@rodeinnovation.com',
-    'ê´€ë¦¬ì',
+    'Admin',
     'DEPARTMENT_HEAD',
     t.id,
     wp.id,
@@ -76,8 +65,7 @@ SELECT
     NOW()
 FROM teams t
 JOIN work_policies wp ON wp.team_id = t.id
-WHERE t.name = 'ê²½ì˜ì „ëµë³¸ë¶€'
+WHERE t.name = 'BusinessDivision'
   AND NOT EXISTS (
       SELECT 1 FROM users WHERE login_id = 'admin'
   );
-
