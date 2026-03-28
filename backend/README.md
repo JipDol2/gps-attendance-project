@@ -77,14 +77,32 @@ cd backend
 - `POST /api/v1/attendance/me/location`
 - `GET /api/v1/attendance/me/sessions`
 - `GET /api/v1/attendance/visible-sessions`
+- `GET /api/v1/attendance/me/history`
+- `GET /api/v1/dashboard/summary`
 - `GET /api/v1/branches`
 - `POST /api/v1/branches`
 - `PATCH /api/v1/branches/{branchId}`
 - `DELETE /api/v1/branches/{branchId}`
 - `GET /api/v1/teams`
+- `GET /api/v1/teams/{teamId}/attendance/today`
 - `POST /api/v1/teams`
 - `POST /api/v1/teams/work-policies`
 - `PATCH /api/v1/teams/work-policies/{policyId}`
+- `GET /api/v1/work-policies`
+- `PUT /api/v1/work-policies/{policyId}`
+- `GET /api/v1/permissions`
+- `GET /api/v1/permissions/{permissionId}/members`
+- `POST /api/v1/permissions`
+- `PUT /api/v1/permissions/{permissionId}`
+- `DELETE /api/v1/permissions/{permissionId}`
+- `POST /api/v1/permissions/{permissionId}/members`
+- `DELETE /api/v1/permissions/{permissionId}/members/{userId}`
+
+## 최근 백엔드 업데이트 (2026-03-28)
+- 모바일 대시보드/기록/팀/정책/권한 화면 대응 API 추가
+- `Permission`, `UserPermission` 도메인 및 CRUD 서비스 추가
+- 권한 멤버 할당/해제 API 추가
+- 초기 데이터(`data.sql`)에 기본 권한 및 admin 권한 매핑 seed 추가
 
 ## 종료
 ```bash

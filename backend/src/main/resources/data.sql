@@ -1,19 +1,19 @@
 INSERT INTO branches (name, latitude, longitude)
-SELECT 'À»Áö·Î °æ±âºôµù', 37.5661, 126.9920
+SELECT 'ì„ì§€ë¡œ ê²½ê¸°ë¹Œë”©', 37.5661, 126.9920
 WHERE NOT EXISTS (
-    SELECT 1 FROM branches WHERE name = 'À»Áö·Î °æ±âºôµù'
+    SELECT 1 FROM branches WHERE name = 'ì„ì§€ë¡œ ê²½ê¸°ë¹Œë”©'
 );
 
 INSERT INTO branches (name, latitude, longitude)
-SELECT '°­³² Å×Çì¶õ¼¾ÅÍ', 37.4981, 127.0276
+SELECT 'ê°•ë‚¨ í…Œí—¤ë€ì„¼í„°', 37.4981, 127.0276
 WHERE NOT EXISTS (
-    SELECT 1 FROM branches WHERE name = '°­³² Å×Çì¶õ¼¾ÅÍ'
+    SELECT 1 FROM branches WHERE name = 'ê°•ë‚¨ í…Œí—¤ë€ì„¼í„°'
 );
 
 INSERT INTO teams (name, parent_team_id, branch_id)
 SELECT 'RodeInnovation', NULL, b.id
 FROM branches b
-WHERE b.name = 'À»Áö·Î °æ±âºôµù'
+WHERE b.name = 'ì„ì§€ë¡œ ê²½ê¸°ë¹Œë”©'
   AND NOT EXISTS (
       SELECT 1 FROM teams t WHERE t.name = 'RodeInnovation' AND t.parent_team_id IS NULL
   );
@@ -21,7 +21,7 @@ WHERE b.name = 'À»Áö·Î °æ±âºôµù'
 INSERT INTO teams (name, parent_team_id, branch_id)
 SELECT 'BusinessDivision', parent.id, b.id
 FROM teams parent
-JOIN branches b ON b.name = 'À»Áö·Î °æ±âºôµù'
+JOIN branches b ON b.name = 'ì„ì§€ë¡œ ê²½ê¸°ë¹Œë”©'
 WHERE parent.name = 'RodeInnovation'
   AND parent.parent_team_id IS NULL
   AND NOT EXISTS (
@@ -32,7 +32,7 @@ INSERT INTO teams (name, parent_team_id, branch_id)
 SELECT child_name, parent.id, b.id
 FROM teams parent
 CROSS JOIN (VALUES ('HR'), ('Sales'), ('FieldOps')) AS children(child_name)
-JOIN branches b ON b.name = CASE WHEN children.child_name = 'FieldOps' THEN '°­³² Å×Çì¶õ¼¾ÅÍ' ELSE 'À»Áö·Î °æ±âºôµù' END
+JOIN branches b ON b.name = CASE WHEN children.child_name = 'FieldOps' THEN 'ê°•ë‚¨ í…Œí—¤ë€ì„¼í„°' ELSE 'ì„ì§€ë¡œ ê²½ê¸°ë¹Œë”©' END
 WHERE parent.name = 'BusinessDivision'
   AND NOT EXISTS (
       SELECT 1 FROM teams t WHERE t.name = children.child_name AND t.parent_team_id = parent.id
@@ -50,10 +50,11 @@ WHERE NOT EXISTS (
     SELECT 1 FROM work_policies wp WHERE wp.team_id = t.id
 );
 
+-- ë¹„ë°€ë²ˆí˜¸ : admin
 INSERT INTO users (login_id, password_hash, email, name, role_level, team_id, policy_id, active, hr_authority, created_at, updated_at)
 SELECT
     'admin',
-    '$2a$10$AxTw/7.TZ1oWYOReGjx6qONpqeCKqj7xVc4b1EhtBv3znaiyAtmF2',
+    '$2a$10$4kVrTnQZ03dnq1rp61SQs.5Vs1XU1PxeErsgYji1TY99r73aVrR7e',
     'admin@rodeinnovation.com',
     'Admin',
     'DEPARTMENT_HEAD',
@@ -68,4 +69,40 @@ JOIN work_policies wp ON wp.team_id = t.id
 WHERE t.name = 'BusinessDivision'
   AND NOT EXISTS (
       SELECT 1 FROM users WHERE login_id = 'admin'
+  );
+
+INSERT INTO permissions (name, description, created_at)
+SELECT 'SYSTEM_ADMIN', 'ëª¨ë“  ê´€ë¦¬ ê¶Œí•œ', NOW()
+WHERE NOT EXISTS (
+    SELECT 1 FROM permissions WHERE name = 'SYSTEM_ADMIN'
+);
+
+INSERT INTO permissions (name, description, created_at)
+SELECT 'HR', 'ì¸ì‚¬ ë° ì •ì±… ê´€ë¦¬ ê¶Œí•œ', NOW()
+WHERE NOT EXISTS (
+    SELECT 1 FROM permissions WHERE name = 'HR'
+);
+
+INSERT INTO permissions (name, description, created_at)
+SELECT 'TEAM_LEAD', 'íŒ€ ê´€ë¦¬ ê¶Œí•œ', NOW()
+WHERE NOT EXISTS (
+    SELECT 1 FROM permissions WHERE name = 'TEAM_LEAD'
+);
+
+INSERT INTO permissions (name, description, created_at)
+SELECT 'MEMBER', 'ê¸°ë³¸ ì¶œí‡´ê·¼ ê¶Œí•œ', NOW()
+WHERE NOT EXISTS (
+    SELECT 1 FROM permissions WHERE name = 'MEMBER'
+);
+
+INSERT INTO user_permissions (user_id, permission_id)
+SELECT u.id, p.id
+FROM users u
+JOIN permissions p ON p.name = 'SYSTEM_ADMIN'
+WHERE u.login_id = 'admin'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM user_permissions up
+      WHERE up.user_id = u.id
+        AND up.permission_id = p.id
   );

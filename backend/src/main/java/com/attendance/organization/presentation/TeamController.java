@@ -1,6 +1,8 @@
 package com.attendance.organization.presentation;
 
 import com.attendance.attendance.domain.WorkPolicy;
+import com.attendance.mobile.application.MobileQueryService;
+import com.attendance.mobile.presentation.dto.TeamAttendanceTodayResponse;
 import com.attendance.organization.application.OrganizationCommandService;
 import com.attendance.organization.domain.Team;
 import com.attendance.organization.presentation.dto.CreateTeamRequest;
@@ -33,6 +35,7 @@ import java.util.Map;
 public class TeamController {
 
     private final OrganizationCommandService organizationCommandService;
+    private final MobileQueryService mobileQueryService;
 
     @GetMapping("/teams")
     public ResponseEntity<List<TeamSummaryResponse>> list() {
@@ -55,6 +58,11 @@ public class TeamController {
                 request.branchId()
         );
         return ResponseEntity.ok(TeamResponse.from(team));
+    }
+
+    @GetMapping("/teams/{teamId}/attendance/today")
+    public ResponseEntity<TeamAttendanceTodayResponse> teamAttendanceToday(@PathVariable Long teamId) {
+        return ResponseEntity.ok(mobileQueryService.teamAttendanceToday(teamId));
     }
 
     @PatchMapping("/teams/{teamId}")

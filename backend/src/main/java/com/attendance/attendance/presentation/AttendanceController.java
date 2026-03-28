@@ -5,6 +5,8 @@ import com.attendance.attendance.application.AttendanceTrackingService;
 import com.attendance.attendance.presentation.dto.LocationUpdateRequest;
 import com.attendance.attendance.presentation.dto.LocationUpdateResponse;
 import com.attendance.attendance.presentation.dto.WorkSessionResponse;
+import com.attendance.mobile.application.MobileQueryService;
+import com.attendance.mobile.presentation.dto.AttendanceHistoryItemResponse;
 import com.attendance.shared.security.UserSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class AttendanceController {
 
     private final AttendanceTrackingService attendanceTrackingService;
     private final AttendanceQueryService attendanceQueryService;
+    private final MobileQueryService mobileQueryService;
 
     @PostMapping("/me/location")
     public ResponseEntity<LocationUpdateResponse> updateMyLocation(
@@ -70,6 +73,17 @@ public class AttendanceController {
                 .visibleSessionsByLoginId(resolveLoginId(userSession), from, to, pageable)
                 .map(WorkSessionResponse::from);
         return ResponseEntity.ok(new PageImpl<>(mapped.getContent(), pageable, mapped.getTotalElements()));
+    }
+
+    @GetMapping("/me/history")
+    public ResponseEntity<Page<AttendanceHistoryItemResponse>> myAttendanceHistory(
+            @AuthenticationPrincipal UserSession userSession,
+            @RequestParam(required = false) String month,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+                mobileQueryService.myAttendanceHistory(resolveUserId(userSession), month, pageable)
+        );
     }
 
     private String resolveLoginId(UserSession userSession) {

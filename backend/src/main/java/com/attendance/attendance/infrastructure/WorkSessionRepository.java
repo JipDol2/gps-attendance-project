@@ -22,9 +22,17 @@ public interface WorkSessionRepository extends JpaRepository<WorkSession, Long> 
     Page<WorkSession> findByUserIdOrderByCheckInAtDesc(Long userId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
+    Page<WorkSession> findByUserIdAndCheckInAtBetweenOrderByCheckInAtDesc(
+            Long userId, LocalDateTime from, LocalDateTime to, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user"})
     Page<WorkSession> findByUserIdInOrderByCheckInAtDesc(List<Long> userIds, Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
     Page<WorkSession> findByUserIdInAndCheckInAtBetweenOrderByCheckInAtDesc(
             List<Long> userIds, LocalDateTime from, LocalDateTime to, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user"})
+    List<WorkSession> findByUserIdInAndCheckInAtBetweenOrderByCheckInAtDesc(
+            List<Long> userIds, LocalDateTime from, LocalDateTime to);
 }
