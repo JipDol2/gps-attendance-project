@@ -83,3 +83,94 @@ data class WorkSessionResponse(
 data class PageResponse<T>(
     val content: List<T> = emptyList()
 )
+
+@Serializable
+data class DashboardSummaryResponse(
+    val teamId: Long? = null,
+    val teamName: String? = null,
+    val workDate: String? = null,
+    val totalMembers: Int = 0,
+    val checkedInMembers: Int = 0,
+    val notCheckedInMembers: Int = 0,
+    val myStatus: String? = null
+)
+
+@Serializable
+data class AttendanceHistoryItemResponse(
+    val sessionId: Long,
+    val workDate: String? = null,
+    val status: String? = null,
+    val checkInAt: String? = null,
+    val checkOutAt: String? = null,
+    val late: Boolean = false
+)
+
+@Serializable
+data class TeamAttendanceTodayResponse(
+    val teamId: Long,
+    val teamName: String,
+    val workDate: String? = null,
+    val members: List<TeamAttendanceMemberResponse> = emptyList()
+)
+
+@Serializable
+data class TeamAttendanceMemberResponse(
+    val userId: Long,
+    val userName: String,
+    val position: String? = null,
+    val status: String? = null,
+    val checkInAt: String? = null,
+    val checkOutAt: String? = null,
+    val locationKnown: Boolean = false
+)
+
+@Serializable
+data class WorkPolicyResponse(
+    val policyId: Long,
+    val teamId: Long,
+    val teamName: String? = null,
+    val workAddress: String,
+    val allowedRadiusM: Int,
+    val graceMinutes: Int,
+    val coreTimeStart: String,
+    val coreTimeEnd: String,
+    val enabled: Boolean = true
+)
+
+@Serializable
+data class WorkPolicyUpsertRequest(
+    val teamId: Long,
+    val workAddress: String,
+    val allowedRadiusM: Int,
+    val graceMinutes: Int,
+    val coreTimeStart: String,
+    val coreTimeEnd: String,
+    val enabled: Boolean = true
+)
+
+@Serializable
+data class PermissionResponse(
+    val permissionId: Long,
+    val name: String,
+    val description: String? = null,
+    val memberCount: Int = 0,
+    val createdAt: String? = null
+)
+
+@Serializable
+data class PermissionMemberResponse(
+    val userId: Long,
+    val userName: String,
+    val teamName: String? = null
+)
+
+@Serializable
+data class PermissionMemberAssignRequest(
+    val userId: Long
+)
+
+@Serializable
+data class PermissionUpsertRequest(
+    val name: String,
+    val description: String? = null
+)

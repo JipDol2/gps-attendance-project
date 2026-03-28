@@ -1,6 +1,7 @@
 package com.gpsattendance.mobile.data.repository
 
 import com.gpsattendance.mobile.data.model.TeamResponse
+import com.gpsattendance.mobile.data.model.TeamAttendanceTodayResponse
 import com.gpsattendance.mobile.data.network.TeamApi
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,5 +20,17 @@ class TeamRepository @Inject constructor(
             throw IllegalStateException("Team list request failed (${response.code()}): $body")
         }
         response.body().orEmpty()
+    }
+
+    suspend fun teamAttendanceToday(teamId: Long): Result<TeamAttendanceTodayResponse> = runCatching {
+        val response = teamApi.teamAttendanceToday(teamId)
+        if (!response.isSuccessful) {
+            val body = response.errorBody()?.string().orEmpty()
+            if (response.code() == 401 || response.code() == 403) {
+                throw AuthExpiredException("Session expired (${response.code()})")
+            }
+            throw IllegalStateException("Team attendance request failed (${response.code()}): $body")
+        }
+        response.body() ?: throw IllegalStateException("Team attendance response is empty")
     }
 }

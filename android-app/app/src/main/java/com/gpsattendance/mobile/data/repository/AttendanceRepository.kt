@@ -2,6 +2,7 @@ package com.gpsattendance.mobile.data.repository
 
 import com.gpsattendance.mobile.data.model.LocationUpdateRequest
 import com.gpsattendance.mobile.data.model.LocationUpdateResponse
+import com.gpsattendance.mobile.data.model.AttendanceHistoryItemResponse
 import com.gpsattendance.mobile.data.model.WorkSessionResponse
 import com.gpsattendance.mobile.data.network.AttendanceApi
 import java.time.LocalDateTime
@@ -45,6 +46,18 @@ class AttendanceRepository @Inject constructor(
                 throw AuthExpiredException("Session expired (${response.code()})")
             }
             throw IllegalStateException("Visible sessions request failed (${response.code()}): $body")
+        }
+        response.body()?.content.orEmpty()
+    }
+
+    suspend fun myAttendanceHistory(month: String? = null): Result<List<AttendanceHistoryItemResponse>> = runCatching {
+        val response = attendanceApi.myAttendanceHistory(month = month, page = 0, size = 50)
+        if (!response.isSuccessful) {
+            val body = response.errorBody()?.string().orEmpty()
+            if (response.code() == 401 || response.code() == 403) {
+                throw AuthExpiredException("Session expired (${response.code()})")
+            }
+            throw IllegalStateException("Attendance history request failed (${response.code()}): $body")
         }
         response.body()?.content.orEmpty()
     }

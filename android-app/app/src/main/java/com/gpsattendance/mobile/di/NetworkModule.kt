@@ -4,6 +4,9 @@ import com.gpsattendance.mobile.BuildConfig
 import com.gpsattendance.mobile.data.network.AttendanceApi
 import com.gpsattendance.mobile.data.network.AuthApi
 import com.gpsattendance.mobile.data.network.AuthInterceptor
+import com.gpsattendance.mobile.data.network.DashboardApi
+import com.gpsattendance.mobile.data.network.PermissionApi
+import com.gpsattendance.mobile.data.network.PolicyApi
 import com.gpsattendance.mobile.data.network.RefreshApi
 import com.gpsattendance.mobile.data.network.TeamApi
 import com.gpsattendance.mobile.data.network.TokenAuthenticator
@@ -105,4 +108,16 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideTeamApi(retrofit: Retrofit): TeamApi = retrofit.create(TeamApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideDashboardApi(retrofit: Retrofit): DashboardApi = retrofit.create(DashboardApi::class.java)
+
+    @Provides
+    @Singleton
+    fun providePolicyApi(retrofit: Retrofit): PolicyApi = retrofit.create(PolicyApi::class.java)
+
+    @Provides
+    @Singleton
+    fun providePermissionApi(retrofit: Retrofit): PermissionApi = retrofit.create(PermissionApi::class.java)
 }
